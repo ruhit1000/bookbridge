@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum BookStatus {
+  AVAILABLE
+  BORROWED
+  UNAVAILABLE
+}
+
+enum BorrowRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RETURNED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  books          Book[]
+  borrowRequests BorrowRequest[]
+
+  @@map("users")
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  books Book[]
+
+  @@map("categories")
+}
+
+model Book {
+  id          String     @id @default(uuid())
+  title       String
+  author      String
+  description String?
+  condition   String?
+  status      BookStatus @default(AVAILABLE)
+  isDeleted   Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  ownerId    String
+  categoryId String
+
+  owner    User            @relation(fields: [ownerId], references: [id])
+  category Category        @relation(fields: [categoryId], references: [id])
+  requests BorrowRequest[]
+
+  @@index([ownerId])
+  @@index([categoryId])
+  @@index([status])
+  @@map("books")
+}
+
+model BorrowRequest {
+  id        String              @id @default(uuid())
+  message   String?
+  status    BorrowRequestStatus @default(PENDING)
+  isDeleted Boolean             @default(false)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  bookId      String
+  requesterId String
+
+  book      Book @relation(fields: [bookId], references: [id])
+  requester User @relation(fields: [requesterId], references: [id])
+
+  @@index([bookId])
+  @@index([requesterId])
+  @@index([status])
+  @@map("borrow_requests")
+}
