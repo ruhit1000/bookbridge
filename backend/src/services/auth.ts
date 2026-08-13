@@ -1,8 +1,12 @@
+import { Router } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import prisma from "../lib/prisma.js";
 import { AppError } from "../lib/errors.js";
+import { sendSuccess } from "../lib/response.js";
+
+const router = Router();
 
 // ─── Validation Schemas ────────────────────────────────────────
 
@@ -17,15 +21,15 @@ const loginSchema = z.object({
     password: z.string().min(1, "Password is required"),
 });
 
-// ─── Service Functions ─────────────────────────────────────────
+// ─── Routes ────────────────────────────────────────────────────
 
 /**
- * Register a new user.
- * Validates input → checks duplicate email → hashes password → creates user.
- * Returns the created user without the password field.
+ * POST /api/v1/auth/register
+ * Register a new user account.
+ * Body: { name, email, password }
  */
-export const register = async (body: unknown) => {
-    const { name, email, password } = registerSchema.parse(body);
+router.post("/register", async (req, res) => {
+    const { name, email, password } = registerSchema.parse(req.body);
 
     // Reject duplicate emails (including soft-deleted accounts)
     const existing = await prisma.user.findUnique({ where: { email } });
@@ -46,24 +50,23 @@ export const register = async (body: unknown) => {
         },
     });
 
-    return user;
-};
+    sendSuccess(res, user, "Registration successful.", 201);
+});
 
 /**
- * Login an existing user.
- * Validates input → finds user → verifies password → signs JWT.
- * Returns { token, user } without the password field.
+ * POST /api/v1/auth/login
+ * Authenticate and receive a JWT.
+ * Body: { email, password }
  */
-export const login = async (body: unknown) => {
-    const { email, password } = loginSchema.parse(body);
+router.post("/login", async (req, res) => {
+    const { email, password } = loginSchema.parse(req.body);
 
-    // Find non-deleted user
+    // Find non-deleted user by email
     const user = await prisma.user.findFirst({
         where: { email, isDeleted: false },
     });
 
-    // Return the same message for both "not found" and "wrong password"
-    // to avoid leaking which emails are registered
+    // Same message for "not found" and "wrong password" — prevents email enumeration
     if (!user) {
         throw new AppError("Invalid email or password.", 401);
     }
@@ -83,5 +86,7 @@ export const login = async (body: unknown) => {
     // Strip password before returning
     const { password: _pw, ...safeUser } = user;
 
-    return { token, user: safeUser };
-};
+    sendSuccess(res, { token, user: safeUser }, "Login successful.");
+});
+
+export default router;

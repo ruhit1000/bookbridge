@@ -1,35 +1,17 @@
 import { Router } from "express";
-import { sendSuccess } from "../lib/response.js";
-import * as authService from "../services/auth.js";
+import auth from "../services/auth.js";
+import users from "../services/users.js";
+import categories from "../services/categories.js";
+import books from "../services/books.js";
+import borrowRequests from "../services/borrowRequests.js";
 
 const router = Router();
 
-// ═══════════════════════════════════════════════════════════════
-// AUTH ROUTES — /api/v1/auth
-// ═══════════════════════════════════════════════════════════════
-
-/**
- * POST /api/v1/auth/register
- * Register a new user account.
- *
- * Body: { name, email, password }
- * Response: 201 + created user (no password)
- */
-router.post("/auth/register", async (req, res) => {
-    const user = await authService.register(req.body);
-    sendSuccess(res, user, "Registration successful.", 201);
-});
-
-/**
- * POST /api/v1/auth/login
- * Authenticate and receive a JWT.
- *
- * Body: { email, password }
- * Response: 200 + { token, user }
- */
-router.post("/auth/login", async (req, res) => {
-    const result = await authService.login(req.body);
-    sendSuccess(res, result, "Login successful.");
-});
+// ─── Mount Service Routers ─────────────────────────────────────
+router.use("/auth", auth);
+router.use("/users", users);
+router.use("/categories", categories);
+router.use("/books", books);
+router.use("/borrow-requests", borrowRequests);
 
 export default router;
