@@ -7,8 +7,6 @@ import { authenticate } from "../lib/auth.js";
 
 const router = Router();
 
-// ─── Validation Schemas ────────────────────────────────────────
-
 const createRequestSchema = z.object({
     bookId: z.string().min(1, "Book ID is required"),
     message: z.string().optional(),
@@ -20,7 +18,6 @@ const updateRequestSchema = z.object({
     }),
 });
 
-// ─── Shared Include (consistent borrow request shape) ──────────
 const requestInclude = {
     book: {
         select: {
@@ -34,8 +31,6 @@ const requestInclude = {
     },
     requester: { select: { id: true, name: true, email: true } },
 } as const;
-
-// ─── Routes ────────────────────────────────────────────────────
 
 /**
  * POST /api/v1/borrow-requests
@@ -55,12 +50,10 @@ router.post("/", authenticate, async (req, res) => {
     });
     if (!book) throw new AppError("Book not found.", 404);
 
-    // Rule 1: cannot borrow your own book
     if (book.ownerId === requesterId) {
         throw new AppError("You cannot request to borrow your own book.", 400);
     }
 
-    // Rule 2: book must be available
     if (book.status !== "AVAILABLE") {
         throw new AppError(
             "This book is not available for borrowing.",
@@ -89,13 +82,10 @@ router.get("/", authenticate, async (req, res) => {
     let where = {};
 
     if (role === "requester") {
-        // Only requests I submitted
         where = { requesterId: userId, isDeleted: false };
     } else if (role === "owner") {
-        // Only requests for books I own
         where = { isDeleted: false, book: { ownerId: userId } };
     } else {
-        // All requests relevant to me (both sides)
         where = {
             isDeleted: false,
             OR: [
@@ -129,7 +119,6 @@ router.get("/:id", authenticate, async (req, res) => {
 
     if (!request) throw new AppError("Borrow request not found.", 404);
 
-    // Only the requester or the book owner can view this request
     const isRequester = request.requesterId === userId;
     const isOwner = request.book.owner.id === userId;
 
@@ -167,9 +156,7 @@ router.patch("/:id", authenticate, async (req, res) => {
 
     if (!request) throw new AppError("Borrow request not found.", 404);
 
-    // ── APPROVE or REJECT ──────────────────────────────────────
     if (status === "APPROVED" || status === "REJECTED") {
-        // Only the book owner can approve or reject
         if (request.book.ownerId !== userId) {
             throw new AppError(
                 "Only the book owner can approve or reject borrow requests.",
@@ -177,7 +164,6 @@ router.patch("/:id", authenticate, async (req, res) => {
             );
         }
 
-        // Can only act on PENDING requests
         if (request.status !== "PENDING") {
             throw new AppError(
                 "Only pending requests can be approved or rejected.",
@@ -186,7 +172,6 @@ router.patch("/:id", authenticate, async (req, res) => {
         }
 
         if (status === "APPROVED") {
-            // Atomic: update request + book status together
             const [updated] = await prisma.$transaction([
                 prisma.borrowRequest.update({
                     where: { id: request.id },
@@ -201,7 +186,6 @@ router.patch("/:id", authenticate, async (req, res) => {
             return sendSuccess(res, updated, "Borrow request approved. Book is now BORROWED.");
         }
 
-        // REJECTED — only update the request
         const updated = await prisma.borrowRequest.update({
             where: { id: request.id },
             data: { status: "REJECTED" },
@@ -210,9 +194,7 @@ router.patch("/:id", authenticate, async (req, res) => {
         return sendSuccess(res, updated, "Borrow request rejected.");
     }
 
-    // ── RETURN ─────────────────────────────────────────────────
     if (status === "RETURNED") {
-        // Only the original requester can mark as returned
         if (request.requesterId !== userId) {
             throw new AppError(
                 "Only the borrower can mark a book as returned.",
@@ -220,7 +202,6 @@ router.patch("/:id", authenticate, async (req, res) => {
             );
         }
 
-        // Can only return an APPROVED request
         if (request.status !== "APPROVED") {
             throw new AppError(
                 "Only approved requests can be marked as returned.",
@@ -228,7 +209,6 @@ router.patch("/:id", authenticate, async (req, res) => {
             );
         }
 
-        // Atomic: update request + book status together
         const [updated] = await prisma.$transaction([
             prisma.borrowRequest.update({
                 where: { id: request.id },
@@ -257,7 +237,6 @@ router.delete("/:id", authenticate, async (req, res) => {
 
     if (!request) throw new AppError("Borrow request not found.", 404);
 
-    // Only the requester can delete their own request
     if (request.requesterId !== userId) {
         throw new AppError(
             "You are not authorised to delete this borrow request.",
@@ -265,7 +244,6 @@ router.delete("/:id", authenticate, async (req, res) => {
         );
     }
 
-    // Only PENDING requests can be withdrawn
     if (request.status !== "PENDING") {
         throw new AppError(
             "Only pending borrow requests can be withdrawn.",

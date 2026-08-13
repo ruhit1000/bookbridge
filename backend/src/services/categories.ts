@@ -7,8 +7,6 @@ import { authenticate } from "../lib/auth.js";
 
 const router = Router();
 
-// ─── Validation Schemas ────────────────────────────────────────
-
 const createCategorySchema = z.object({
     name: z.string().min(1, "Category name is required").max(100, "Name too long"),
 });
@@ -16,8 +14,6 @@ const createCategorySchema = z.object({
 const updateCategorySchema = z.object({
     name: z.string().min(1, "Category name is required").max(100, "Name too long").optional(),
 });
-
-// ─── Routes ────────────────────────────────────────────────────
 
 /**
  * POST /api/v1/categories
@@ -27,7 +23,6 @@ const updateCategorySchema = z.object({
 router.post("/", authenticate, async (req, res) => {
     const { name } = createCategorySchema.parse(req.body);
 
-    // Reject duplicate category names
     const existing = await prisma.category.findUnique({ where: { name } });
     if (existing) {
         throw new AppError("A category with this name already exists.", 409);
@@ -60,7 +55,6 @@ router.get("/:id", async (req, res) => {
     const category = await prisma.category.findFirst({
         where: { id: req.params.id as string, isDeleted: false },
         include: {
-            // Include non-deleted books belonging to this category
             books: {
                 where: { isDeleted: false },
                 select: {
@@ -96,7 +90,6 @@ router.patch("/:id", authenticate, async (req, res) => {
 
     const { name } = updateCategorySchema.parse(req.body);
 
-    // If renaming, ensure new name is not already taken
     if (name && name !== existing.name) {
         const taken = await prisma.category.findUnique({ where: { name } });
         if (taken) throw new AppError("A category with this name already exists.", 409);

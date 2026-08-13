@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 import prisma from "./prisma.js";
 import { AppError } from "./errors.js";
 
-// ─── Type Augmentation ─────────────────────────────────────────
 // Extend Express's Request interface so TypeScript knows about
 // req.user on every protected route handler.
 declare global {
@@ -18,12 +17,10 @@ declare global {
     }
 }
 
-// ─── JWT Payload Shape ─────────────────────────────────────────
 interface JwtPayload {
     userId: string;
 }
 
-// ─── Authenticate Middleware ───────────────────────────────────
 /**
  * Verifies the Bearer JWT from the Authorization header.
  * On success, attaches the authenticated user to req.user.
@@ -55,7 +52,6 @@ export const authenticate = async (
         throw new AppError("Invalid or expired token.", 401);
     }
 
-    // Verify the user still exists and has not been soft-deleted
     const user = await prisma.user.findFirst({
         where: {
             id: decoded.userId,

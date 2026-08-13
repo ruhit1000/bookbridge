@@ -7,12 +7,10 @@ import { ZodError } from "zod";
 
 const app = express();
 
-// ─── Middlewares ───────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ─── Health Check ──────────────────────────────────────────────
 app.get("/", (_req, res) => {
     res.json({
         success: true,
@@ -20,10 +18,8 @@ app.get("/", (_req, res) => {
     });
 });
 
-// ─── API Routes ────────────────────────────────────────────────
 app.use("/api/v1", router);
 
-// ─── 404 Handler ───────────────────────────────────────────────
 app.use((_req, res) => {
     res.status(404).json({
         success: false,
@@ -31,12 +27,10 @@ app.use((_req, res) => {
     });
 });
 
-// ─── Global Error Handler ──────────────────────────────────────
 // 4-argument signature required for Express to treat this as an
 // error-handling middleware. Express 5 auto-forwards async errors here.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-    // Known application error (thrown intentionally from services)
     if (err instanceof AppError) {
         res.status(err.statusCode).json({
             success: false,
@@ -58,9 +52,7 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
         return;
     }
 
-    // Prisma known request errors
     if (err instanceof PrismaClientKnownRequestError) {
-        // P2002 — Unique constraint violation
         if ((err as PrismaClientKnownRequestError).code === "P2002") {
             res.status(409).json({
                 success: false,
@@ -69,7 +61,6 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
             return;
         }
 
-        // P2025 — Record not found
         if ((err as PrismaClientKnownRequestError).code === "P2025") {
             res.status(404).json({
                 success: false,

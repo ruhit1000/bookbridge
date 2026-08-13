@@ -7,7 +7,6 @@ import { authenticate } from "../lib/auth.js";
 
 const router = Router();
 
-// ─── Shared Select (always exclude password) ───────────────────
 const userSelect = {
     id: true,
     name: true,
@@ -17,14 +16,10 @@ const userSelect = {
     updatedAt: true,
 } as const;
 
-// ─── Validation Schemas ────────────────────────────────────────
-
 const updateUserSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters").optional(),
     email: z.email("Invalid email address").optional(),
 });
-
-// ─── Routes ────────────────────────────────────────────────────
 
 /**
  * GET /api/v1/users
@@ -61,7 +56,6 @@ router.patch("/:id", authenticate, async (req, res) => {
     const id = req.params.id as string;
     const requesterId = req.user!.id;
 
-    // Only the account owner can update
     if (id !== requesterId) {
         throw new AppError("You are not authorised to update this account.", 403);
     }
@@ -73,7 +67,6 @@ router.patch("/:id", authenticate, async (req, res) => {
 
     const { name, email } = updateUserSchema.parse(req.body);
 
-    // If changing email, ensure it is not already taken
     if (email && email !== existing.email) {
         const taken = await prisma.user.findUnique({ where: { email } });
         if (taken) throw new AppError("An account with this email already exists.", 409);
@@ -99,7 +92,6 @@ router.delete("/:id", authenticate, async (req, res) => {
     const id = req.params.id as string;
     const requesterId = req.user!.id;
 
-    // Only the account owner can delete
     if (id !== requesterId) {
         throw new AppError("You are not authorised to delete this account.", 403);
     }

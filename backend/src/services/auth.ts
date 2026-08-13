@@ -8,8 +8,6 @@ import { sendSuccess } from "../lib/response.js";
 
 const router = Router();
 
-// ─── Validation Schemas ────────────────────────────────────────
-
 const registerSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.email("Invalid email address"),
@@ -20,8 +18,6 @@ const loginSchema = z.object({
     email: z.email("Invalid email address"),
     password: z.string().min(1, "Password is required"),
 });
-
-// ─── Routes ────────────────────────────────────────────────────
 
 /**
  * POST /api/v1/auth/register

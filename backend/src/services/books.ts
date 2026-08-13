@@ -7,8 +7,6 @@ import { authenticate } from "../lib/auth.js";
 
 const router = Router();
 
-// ─── Validation Schemas ────────────────────────────────────────
-
 const bookStatusValues = ["AVAILABLE", "BORROWED", "UNAVAILABLE"] as const;
 
 const createBookSchema = z.object({
@@ -28,8 +26,6 @@ const updateBookSchema = z.object({
     status: z.enum(bookStatusValues).optional(),
 });
 
-// ─── Routes ────────────────────────────────────────────────────
-
 /**
  * POST /api/v1/books
  * List a new book (protected).
@@ -40,7 +36,6 @@ router.post("/", authenticate, async (req, res) => {
     const { title, author, description, condition, categoryId } =
         createBookSchema.parse(req.body);
 
-    // Verify the category exists and has not been soft-deleted
     const category = await prisma.category.findFirst({
         where: { id: categoryId, isDeleted: false },
     });
@@ -53,7 +48,7 @@ router.post("/", authenticate, async (req, res) => {
             description,
             condition,
             categoryId,
-            ownerId: req.user!.id, // always from JWT, never from body
+            ownerId: req.user!.id,
         },
         include: {
             owner: { select: { id: true, name: true, email: true } },
@@ -72,7 +67,6 @@ router.post("/", authenticate, async (req, res) => {
 router.get("/", async (req, res) => {
     const { status } = req.query;
 
-    // Validate optional status filter
     const statusFilter = bookStatusValues.includes(status as (typeof bookStatusValues)[number])
         ? (status as (typeof bookStatusValues)[number])
         : undefined;
@@ -134,7 +128,6 @@ router.patch("/:id", authenticate, async (req, res) => {
     });
     if (!book) throw new AppError("Book not found.", 404);
 
-    // Only the book owner can update
     if (book.ownerId !== req.user!.id) {
         throw new AppError("You are not authorised to update this book.", 403);
     }
@@ -142,7 +135,6 @@ router.patch("/:id", authenticate, async (req, res) => {
     const { title, author, description, condition, categoryId, status } =
         updateBookSchema.parse(req.body);
 
-    // If categoryId is being changed, verify the new category exists
     if (categoryId && categoryId !== book.categoryId) {
         const category = await prisma.category.findFirst({
             where: { id: categoryId, isDeleted: false },
@@ -181,7 +173,6 @@ router.delete("/:id", authenticate, async (req, res) => {
     });
     if (!book) throw new AppError("Book not found.", 404);
 
-    // Only the book owner can delete
     if (book.ownerId !== req.user!.id) {
         throw new AppError("You are not authorised to delete this book.", 403);
     }
