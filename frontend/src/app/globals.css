@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@heroui/styles/css";
 
 /* 
   The approved UI direction specifies a soft neutral page background 

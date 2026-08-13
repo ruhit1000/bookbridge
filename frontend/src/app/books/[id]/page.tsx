@@ -8,6 +8,7 @@ import { Book } from "../../../types";
 import { useAuth } from "../../../context/AuthContext";
 import { Loader2, Book as BookIcon, ChevronLeft, User as UserIcon, Tag, AlignLeft } from "lucide-react";
 import Link from "next/link";
+import { Modal, Button } from "@heroui/react";
 
 export default function BookDetailsPage() {
     const params = useParams();
@@ -22,7 +23,6 @@ export default function BookDetailsPage() {
     
     const [isRequesting, setIsRequesting] = useState(false);
     const [requestMessage, setRequestMessage] = useState("");
-    const [showRequestModal, setShowRequestModal] = useState(false);
     const [requestSuccess, setRequestSuccess] = useState(false);
 
     useEffect(() => {
@@ -53,7 +53,6 @@ export default function BookDetailsPage() {
                 message: requestMessage.trim() || undefined
             });
             setRequestSuccess(true);
-            setShowRequestModal(false);
         } catch (err: any) {
             console.error("Failed to request borrow:", err);
             setError(err.response?.data?.message || "Failed to submit request.");
@@ -190,72 +189,77 @@ export default function BookDetailsPage() {
                                 Book is not available
                             </button>
                         ) : (
-                            <button 
-                                onClick={() => setShowRequestModal(true)}
-                                className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-                            >
-                                Request to Borrow
-                            </button>
+                            <Modal>
+                                <Modal.Trigger>
+                                    <Button className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                                        Request to Borrow
+                                    </Button>
+                                </Modal.Trigger>
+                                <Modal.Backdrop className="fixed inset-0 bg-black/50 z-40" />
+                                <Modal.Container placement="center">
+                                    <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+                                        <Modal.Dialog className="bg-white rounded-2xl shadow-xl overflow-hidden p-6 max-w-lg w-full relative outline-none">
+                                        {({ close }) => (
+                                            <form onSubmit={async (e) => {
+                                                await handleRequestBorrow(e);
+                                                close();
+                                            }}>
+                                                <Modal.Header>
+                                                    <Modal.Heading className="text-xl font-bold text-gray-900 mb-2">
+                                                        Request to Borrow
+                                                    </Modal.Heading>
+                                                </Modal.Header>
+                                                <Modal.Body className="mb-6">
+                                                    <p className="text-sm text-gray-500 mb-4">
+                                                        You are requesting to borrow <span className="font-semibold text-gray-700">{book.title}</span> from {book.owner?.name}.
+                                                    </p>
+                                                    
+                                                    <div className="w-full">
+                                                        <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                                                            Message for the owner (optional)
+                                                        </label>
+                                                        <textarea
+                                                            id="message"
+                                                            rows={4}
+                                                            value={requestMessage}
+                                                            onChange={(e) => setRequestMessage(e.target.value)}
+                                                            className="block w-full border border-gray-300 rounded-xl shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                                            placeholder="E.g., I promise to take good care of it and return it in a week!"
+                                                        />
+                                                    </div>
+                                                </Modal.Body>
+                                                <Modal.Footer className="flex justify-end gap-3 border-t border-gray-100 pt-4 mt-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={close}
+                                                        className="inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none transition-colors"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button
+                                                        type="submit"
+                                                        disabled={isRequesting}
+                                                        className="inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none disabled:opacity-50 transition-colors"
+                                                    >
+                                                        {isRequesting ? (
+                                                            <span className="flex items-center gap-2">
+                                                                <Loader2 className="h-4 w-4 animate-spin" /> Sending...
+                                                            </span>
+                                                        ) : "Send Request"}
+                                                    </button>
+                                                </Modal.Footer>
+                                            </form>
+                                        )}
+                                        </Modal.Dialog>
+                                    </div>
+                                </Modal.Container>
+                            </Modal>
                         )}
                     </div>
                 </div>
             </div>
 
-            {/* Request Modal */}
-            {showRequestModal && (
-                <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                    <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity" aria-hidden="true" onClick={() => setShowRequestModal(false)}></div>
-                        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                        <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                            <form onSubmit={handleRequestBorrow}>
-                                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                                    <h3 className="text-xl leading-6 font-bold text-gray-900 mb-2" id="modal-title">
-                                        Request to Borrow
-                                    </h3>
-                                    <p className="text-sm text-gray-500 mb-6">
-                                        You are requesting to borrow <span className="font-semibold text-gray-700">{book.title}</span> from {book.owner?.name}.
-                                    </p>
-                                    
-                                    <div>
-                                        <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                                            Message for the owner (optional)
-                                        </label>
-                                        <textarea
-                                            id="message"
-                                            rows={4}
-                                            value={requestMessage}
-                                            onChange={(e) => setRequestMessage(e.target.value)}
-                                            className="block w-full border border-gray-300 rounded-xl shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                            placeholder="E.g., I promise to take good care of it and return it in a week!"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="bg-gray-50 px-4 py-3 sm:px-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowRequestModal(false)}
-                                        className="w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={isRequesting}
-                                        className="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none disabled:opacity-50 sm:w-auto sm:text-sm transition-colors"
-                                    >
-                                        {isRequesting ? (
-                                            <span className="flex items-center gap-2">
-                                                <Loader2 className="h-4 w-4 animate-spin" /> Sending...
-                                            </span>
-                                        ) : "Send Request"}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            )}
+
         </div>
     );
 }

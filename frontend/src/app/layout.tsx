@@ -25,13 +25,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#F8F7F4] text-gray-900">
-        <AuthProvider>
-          <Navbar />
-          <main className="flex-grow">
-            {children}
-          </main>
-        </AuthProvider>
+      <body className="antialiased bg-[#F8F7F4] text-gray-900 min-h-screen flex flex-col">
+          <AuthProvider>
+            <Navbar />
+            <main className="flex-grow">
+              {children}
+            </main>
+          </AuthProvider>
       </body>
     </html>
   );
