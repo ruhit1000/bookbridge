@@ -89,12 +89,11 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
         }
     }
 
-    // For debugging the Render issue, let's temporarily expose the error message
+    // Unknown / unexpected error — never expose internals to the client
     console.error("[Unhandled Error]", err);
     res.status(500).json({
         success: false,
-        message: err instanceof Error ? err.message : "Internal server error",
-        errorDetails: err,
+        message: "Internal server error",
     });
 });
 
