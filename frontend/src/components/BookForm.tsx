@@ -21,6 +21,8 @@ export default function BookForm({ initialData, isEditing = false }: BookFormPro
     const [categoryId, setCategoryId] = useState(initialData?.categoryId || "");
     const [condition, setCondition] = useState(initialData?.condition || "");
     const [description, setDescription] = useState(initialData?.description || "");
+    const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || "");
+    const [imageFile, setImageFile] = useState<File | null>(null);
     const [status, setStatus] = useState<BookStatus>(initialData?.status || "AVAILABLE");
     
     const [isLoading, setIsLoading] = useState(false);
@@ -53,6 +55,26 @@ export default function BookForm({ initialData, isEditing = false }: BookFormPro
         setIsLoading(true);
 
         try {
+            let uploadedImageUrl = imageUrl;
+            
+            // Upload image to ImgBB if a new file is selected
+            if (imageFile) {
+                const formData = new FormData();
+                formData.append("image", imageFile);
+                
+                const imgbbResponse = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_API_KEY}`, {
+                    method: "POST",
+                    body: formData,
+                });
+                
+                const imgbbData = await imgbbResponse.json();
+                if (imgbbData.success) {
+                    uploadedImageUrl = imgbbData.data.url;
+                } else {
+                    throw new Error("Failed to upload image. Please try again.");
+                }
+            }
+
             if (isEditing && initialData) {
                 await booksApi.updateBook(initialData.id, {
                     title,
@@ -60,6 +82,7 @@ export default function BookForm({ initialData, isEditing = false }: BookFormPro
                     categoryId,
                     condition: condition || undefined,
                     description: description || undefined,
+                    imageUrl: uploadedImageUrl || undefined,
                     status
                 });
                 router.push(`/books/${initialData.id}`);
@@ -69,7 +92,8 @@ export default function BookForm({ initialData, isEditing = false }: BookFormPro
                     author,
                     categoryId,
                     condition: condition || undefined,
-                    description: description || undefined
+                    description: description || undefined,
+                    imageUrl: uploadedImageUrl || undefined
                 });
                 router.push(`/books/${res.data.id}`);
             }
@@ -159,6 +183,25 @@ export default function BookForm({ initialData, isEditing = false }: BookFormPro
                         className="mt-2 block w-full rounded-xl border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-sm"
                         placeholder="e.g. Like New, Good, Fair"
                     />
+                </div>
+
+                <div className="sm:col-span-2">
+                    <label htmlFor="image" className="block text-sm font-medium text-gray-700">
+                        Book Image (Optional)
+                    </label>
+                    <p className="text-sm text-gray-500 mb-2">Upload an image of your book so borrowers know its condition!</p>
+                    <input
+                        type="file"
+                        id="image"
+                        accept="image/*"
+                        onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors"
+                    />
+                    {(imageUrl || imageFile) && (
+                        <div className="mt-3">
+                            <span className="text-sm text-gray-500">Image ready to be saved.</span>
+                        </div>
+                    )}
                 </div>
 
                 {isEditing && (

@@ -8,6 +8,7 @@ import { Book } from "../../../types";
 import { useAuth } from "../../../context/AuthContext";
 import { Loader2, Book as BookIcon, ChevronLeft, User as UserIcon, Tag, AlignLeft } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { Modal, Button } from "@heroui/react";
 
 export default function BookDetailsPage() {
@@ -103,12 +104,24 @@ export default function BookDetailsPage() {
             )}
 
             <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col md:flex-row">
-                {/* Left side: Book Cover Placeholder */}
-                <div className="w-full md:w-1/3 bg-gray-50 flex flex-col items-center justify-center p-12 border-b md:border-b-0 md:border-r border-gray-200 min-h-[300px]">
-                    <BookIcon className="h-20 w-20 text-gray-300 mb-6" strokeWidth={1} />
-                    <span className="text-sm font-medium text-gray-400 uppercase tracking-widest text-center px-4">
-                        {book.category?.name || "Uncategorized"}
-                    </span>
+                {/* Left side: Book Cover */}
+                <div className="relative w-full md:w-1/3 bg-gray-50 flex flex-col items-center justify-center p-12 border-b md:border-b-0 md:border-r border-gray-200 min-h-[300px]">
+                    {book.imageUrl ? (
+                        <Image
+                            src={book.imageUrl}
+                            alt={book.title}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, 33vw"
+                        />
+                    ) : (
+                        <>
+                            <BookIcon className="h-20 w-20 text-gray-300 mb-6" strokeWidth={1} />
+                            <span className="text-sm font-medium text-gray-400 uppercase tracking-widest text-center px-4 relative z-10">
+                                {book.category?.name || "Uncategorized"}
+                            </span>
+                        </>
+                    )}
                 </div>
 
                 {/* Right side: Details */}

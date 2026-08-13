@@ -24,6 +24,7 @@ export interface Book {
     author: string;
     description?: string | null;
     condition?: string | null;
+    imageUrl?: string | null;
     status: BookStatus;
     isDeleted: boolean;
     createdAt: string;

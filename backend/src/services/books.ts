@@ -14,6 +14,7 @@ const createBookSchema = z.object({
     author: z.string().min(1, "Author is required"),
     description: z.string().optional(),
     condition: z.string().optional(),
+    imageUrl: z.string().url().optional(),
     categoryId: z.string().min(1, "Category is required"),
 });
 
@@ -22,6 +23,7 @@ const updateBookSchema = z.object({
     author: z.string().min(1, "Author is required").optional(),
     description: z.string().optional(),
     condition: z.string().optional(),
+    imageUrl: z.string().url().optional(),
     categoryId: z.string().optional(),
     status: z.enum(bookStatusValues).optional(),
 });
@@ -30,10 +32,10 @@ const updateBookSchema = z.object({
  * POST /api/v1/books
  * List a new book (protected).
  * ownerId is taken from the authenticated user — never from the request body.
- * Body: { title, author, description?, condition?, categoryId }
+ * Body: { title, author, description?, condition?, imageUrl?, categoryId }
  */
 router.post("/", authenticate, async (req, res) => {
-    const { title, author, description, condition, categoryId } =
+    const { title, author, description, condition, imageUrl, categoryId } =
         createBookSchema.parse(req.body);
 
     const category = await prisma.category.findFirst({
@@ -47,6 +49,7 @@ router.post("/", authenticate, async (req, res) => {
             author,
             description,
             condition,
+            imageUrl,
             categoryId,
             ownerId: req.user!.id,
         },
@@ -62,19 +65,27 @@ router.post("/", authenticate, async (req, res) => {
 /**
  * GET /api/v1/books
  * Get all available books (public).
- * Optional query param: ?status=AVAILABLE|BORROWED|UNAVAILABLE
+ * Optional query param: ?status=AVAILABLE|BORROWED|UNAVAILABLE & search=keyword
  */
 router.get("/", async (req, res) => {
-    const { status } = req.query;
+    const { status, search } = req.query;
 
     const statusFilter = bookStatusValues.includes(status as (typeof bookStatusValues)[number])
         ? (status as (typeof bookStatusValues)[number])
         : undefined;
 
+    const searchQuery = typeof search === "string" && search.trim().length > 0 ? search.trim() : undefined;
+
     const books = await prisma.book.findMany({
         where: {
             isDeleted: false,
             ...(statusFilter && { status: statusFilter }),
+            ...(searchQuery && {
+                OR: [
+                    { title: { contains: searchQuery, mode: "insensitive" } },
+                    { author: { contains: searchQuery, mode: "insensitive" } }
+                ]
+            }),
         },
         include: {
             owner: { select: { id: true, name: true, email: true } },
@@ -132,7 +143,7 @@ router.patch("/:id", authenticate, async (req, res) => {
         throw new AppError("You are not authorised to update this book.", 403);
     }
 
-    const { title, author, description, condition, categoryId, status } =
+    const { title, author, description, condition, imageUrl, categoryId, status } =
         updateBookSchema.parse(req.body);
 
     if (categoryId && categoryId !== book.categoryId) {
@@ -149,6 +160,7 @@ router.patch("/:id", authenticate, async (req, res) => {
             ...(author && { author }),
             ...(description !== undefined && { description }),
             ...(condition !== undefined && { condition }),
+            ...(imageUrl !== undefined && { imageUrl }),
             ...(categoryId && { categoryId }),
             ...(status && { status }),
         },

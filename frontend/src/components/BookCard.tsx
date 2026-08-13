@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Book } from "../types";
 import { Book as BookIcon } from "lucide-react";
 
@@ -11,12 +12,24 @@ export default function BookCard({ book }: BookCardProps) {
 
     return (
         <Link href={`/books/${book.id}`} className="group flex flex-col h-full bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-            {/* Book Cover Placeholder */}
-            <div className="aspect-[3/4] bg-gray-100 flex flex-col items-center justify-center p-6 text-center border-b border-gray-100 group-hover:bg-gray-50 transition-colors">
-                <BookIcon className="h-12 w-12 text-gray-300 mb-3" strokeWidth={1.5} />
-                <h3 className="font-serif text-lg font-medium text-gray-700 line-clamp-3">
-                    {book.title}
-                </h3>
+            {/* Book Cover */}
+            <div className="relative aspect-[3/4] bg-gray-100 flex flex-col items-center justify-center p-6 text-center border-b border-gray-100 group-hover:bg-gray-50 transition-colors">
+                {book.imageUrl ? (
+                    <Image
+                        src={book.imageUrl}
+                        alt={book.title}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
+                ) : (
+                    <>
+                        <BookIcon className="h-12 w-12 text-gray-300 mb-3" strokeWidth={1.5} />
+                        <h3 className="font-serif text-lg font-medium text-gray-700 line-clamp-3 z-10">
+                            {book.title}
+                        </h3>
+                    </>
+                )}
             </div>
 
             {/* Content */}

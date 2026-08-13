@@ -54,6 +54,7 @@ model Book {
   description String?
   condition   String?
   status      BookStatus @default(AVAILABLE)
+  imageUrl    String?
   isDeleted   Boolean    @default(false)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { booksApi } from "../services/booksApi";
 import { Book } from "../types";
 import BookCard from "../components/BookCard";
@@ -10,13 +11,21 @@ export default function Home() {
     const [books, setBooks] = useState<Book[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchQuery]);
 
     useEffect(() => {
         const fetchBooks = async () => {
             try {
                 setIsLoading(true);
-                // Fetch all available books for the landing page
-                const response = await booksApi.getBooks("AVAILABLE");
+                const response = await booksApi.getBooks("AVAILABLE", debouncedSearch);
                 setBooks(response.data);
             } catch (err) {
                 console.error("Failed to fetch books:", err);
@@ -27,27 +36,41 @@ export default function Home() {
         };
 
         fetchBooks();
-    }, []);
+    }, [debouncedSearch]);
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             {/* Hero Section */}
-            <div className="text-center max-w-2xl mx-auto mb-16">
-                <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight mb-4">
-                    Share books with your community
-                </h1>
-                <p className="text-lg text-gray-600 mb-8">
-                    Discover books people are willing to lend, or list your own library to share with others.
-                </p>
-                <div className="relative max-w-md mx-auto">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <div className="relative w-full h-[300px] sm:h-[400px] rounded-3xl overflow-hidden mb-12 shadow-sm">
+                <Image
+                    src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=2000"
+                    alt="Library Banner"
+                    fill
+                    className="object-cover"
+                    priority
+                />
+                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-6 text-center">
+                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight mb-4 drop-shadow-md">
+                        Share books with your community
+                    </h1>
+                    <p className="text-lg sm:text-xl text-gray-100 max-w-2xl mx-auto drop-shadow-md">
+                        Discover books people are willing to lend, or list your own library to share with others.
+                    </p>
+                </div>
+            </div>
+            
+            {/* Search Section */}
+            <div className="max-w-2xl mx-auto mb-16 px-4">
+                <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Search className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
                         type="text"
-                        className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm shadow-sm transition-shadow hover:shadow-md"
-                        placeholder="Search books by title or author... (Coming soon)"
-                        disabled
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="block w-full pl-12 pr-4 py-4 border border-gray-200 rounded-2xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base shadow-sm transition-shadow hover:shadow-md"
+                        placeholder="Search books by title or author..."
                     />
                 </div>
             </div>
