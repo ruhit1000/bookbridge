@@ -6,6 +6,7 @@ import { borrowRequestsApi } from "../../services/borrowRequestsApi";
 import { BorrowRequest } from "../../types";
 import { Loader2, Clock, CheckCircle, XCircle, ArrowLeftRight } from "lucide-react";
 import Link from "next/link";
+import { AlertDialog, Button } from "@heroui/react";
 
 export default function MyRequestsPage() {
     const [requests, setRequests] = useState<BorrowRequest[]>([]);
@@ -31,12 +32,10 @@ export default function MyRequestsPage() {
     }, []);
 
     const handleWithdraw = async (id: string) => {
-        if (!confirm("Are you sure you want to withdraw this request?")) return;
-        
         try {
             setActionLoading(id);
             await borrowRequestsApi.deleteRequest(id);
-            await fetchRequests(); // Refresh the list
+            await fetchRequests();
         } catch (err) {
             console.error("Failed to withdraw request", err);
             alert("Failed to withdraw request.");
@@ -46,12 +45,10 @@ export default function MyRequestsPage() {
     };
 
     const handleReturn = async (id: string) => {
-        if (!confirm("Have you returned this book to the owner?")) return;
-        
         try {
             setActionLoading(id);
             await borrowRequestsApi.updateRequestStatus(id, "RETURNED");
-            await fetchRequests(); // Refresh the list
+            await fetchRequests();
         } catch (err) {
             console.error("Failed to mark as returned", err);
             alert("Failed to mark as returned.");
@@ -98,8 +95,8 @@ export default function MyRequestsPage() {
                         </div>
                         <h3 className="text-xl font-medium text-gray-900 mb-2">No requests yet</h3>
                         <p className="text-gray-500 mb-6">You haven't requested to borrow any books.</p>
-                        <Link 
-                            href="/" 
+                        <Link
+                            href="/"
                             className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-sm"
                         >
                             Browse Available Books
@@ -129,26 +126,70 @@ export default function MyRequestsPage() {
                                                 </p>
                                             )}
                                         </div>
-                                        
+
                                         <div className="flex flex-col gap-2 min-w-[120px]">
                                             {request.status === "PENDING" && (
-                                                <button
-                                                    onClick={() => handleWithdraw(request.id)}
-                                                    disabled={actionLoading === request.id}
-                                                    className="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-red-600 bg-white hover:bg-red-50 focus:outline-none transition-colors disabled:opacity-50"
-                                                >
-                                                    {actionLoading === request.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Withdraw"}
-                                                </button>
+                                                <AlertDialog>
+                                                    <Button
+                                                        isDisabled={actionLoading === request.id}
+                                                        className="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-red-600 bg-white hover:bg-red-50 focus:outline-none transition-colors disabled:opacity-50"
+                                                    >
+                                                        {actionLoading === request.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Withdraw"}
+                                                    </Button>
+                                                    <AlertDialog.Backdrop className="fixed inset-0 bg-black/50 z-40">
+                                                        <AlertDialog.Container>
+                                                            <AlertDialog.Dialog className="bg-white rounded-2xl shadow-xl p-6 sm:max-w-[400px] z-50">
+                                                                <AlertDialog.Header>
+                                                                    <AlertDialog.Icon status="danger" />
+                                                                    <AlertDialog.Heading className="text-xl font-bold text-gray-900">Withdraw Request?</AlertDialog.Heading>
+                                                                </AlertDialog.Header>
+                                                                <AlertDialog.Body className="mt-2 mb-6">
+                                                                    <p className="text-gray-600">Are you sure you want to withdraw this borrow request?</p>
+                                                                </AlertDialog.Body>
+                                                                <AlertDialog.Footer className="flex justify-end gap-3">
+                                                                    <Button slot="close" variant="tertiary" className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                                                                        Cancel
+                                                                    </Button>
+                                                                    <Button slot="close" variant="danger" onClick={() => handleWithdraw(request.id)} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                                                                        Withdraw
+                                                                    </Button>
+                                                                </AlertDialog.Footer>
+                                                            </AlertDialog.Dialog>
+                                                        </AlertDialog.Container>
+                                                    </AlertDialog.Backdrop>
+                                                </AlertDialog>
                                             )}
-                                            
+
                                             {request.status === "APPROVED" && (
-                                                <button
-                                                    onClick={() => handleReturn(request.id)}
-                                                    disabled={actionLoading === request.id}
-                                                    className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none transition-colors disabled:opacity-50"
-                                                >
-                                                    {actionLoading === request.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Mark Returned"}
-                                                </button>
+                                                <AlertDialog>
+                                                    <Button
+                                                        isDisabled={actionLoading === request.id}
+                                                        className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none transition-colors disabled:opacity-50"
+                                                    >
+                                                        {actionLoading === request.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Mark Returned"}
+                                                    </Button>
+                                                    <AlertDialog.Backdrop className="fixed inset-0 bg-black/50 z-40">
+                                                        <AlertDialog.Container>
+                                                            <AlertDialog.Dialog className="bg-white rounded-2xl shadow-xl p-6 sm:max-w-[400px] z-50">
+                                                                <AlertDialog.Header>
+                                                                    <AlertDialog.Icon status="success" />
+                                                                    <AlertDialog.Heading className="text-xl font-bold text-gray-900">Return Book</AlertDialog.Heading>
+                                                                </AlertDialog.Header>
+                                                                <AlertDialog.Body className="mt-2 mb-6">
+                                                                    <p className="text-gray-600">Have you successfully returned this book to the owner?</p>
+                                                                </AlertDialog.Body>
+                                                                <AlertDialog.Footer className="flex justify-end gap-3">
+                                                                    <Button slot="close" variant="tertiary" className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                                                                        Cancel
+                                                                    </Button>
+                                                                    <Button slot="close" onClick={() => handleReturn(request.id)} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                                                        Confirm Return
+                                                                    </Button>
+                                                                </AlertDialog.Footer>
+                                                            </AlertDialog.Dialog>
+                                                        </AlertDialog.Container>
+                                                    </AlertDialog.Backdrop>
+                                                </AlertDialog>
                                             )}
                                         </div>
                                     </div>

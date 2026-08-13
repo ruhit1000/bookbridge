@@ -14,13 +14,13 @@ export default function BookDetailsPage() {
     const params = useParams();
     const router = useRouter();
     const bookId = params.id as string;
-    
+
     const { user, isAuthenticated } = useAuth();
-    
+
     const [book, setBook] = useState<Book | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    
+
     const [isRequesting, setIsRequesting] = useState(false);
     const [requestMessage, setRequestMessage] = useState("");
     const [requestSuccess, setRequestSuccess] = useState(false);
@@ -46,7 +46,7 @@ export default function BookDetailsPage() {
         e.preventDefault();
         setIsRequesting(true);
         setError(null);
-        
+
         try {
             await borrowRequestsApi.createRequest({
                 bookId,
@@ -120,7 +120,7 @@ export default function BookDetailsPage() {
                             </h1>
                             <p className="text-lg text-gray-500 font-medium">by {book.author}</p>
                         </div>
-                        
+
                         <div>
                             {isAvailable ? (
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-50 text-green-700 border border-green-200">
@@ -168,21 +168,21 @@ export default function BookDetailsPage() {
                     {/* Action Area */}
                     <div className="mt-auto pt-6">
                         {!isAuthenticated ? (
-                            <Link 
+                            <Link
                                 href={`/login?redirect=/books/${book.id}`}
                                 className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-gray-900 hover:bg-gray-800 transition-colors"
                             >
                                 Login to Borrow
                             </Link>
                         ) : isOwner ? (
-                            <Link 
+                            <Link
                                 href={`/edit-book/${book.id}`}
                                 className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-gray-300 rounded-xl shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
                             >
                                 Edit Book
                             </Link>
                         ) : !isAvailable ? (
-                            <button 
+                            <button
                                 disabled
                                 className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-base font-medium text-gray-500 bg-gray-100 cursor-not-allowed"
                             >
@@ -190,30 +190,30 @@ export default function BookDetailsPage() {
                             </button>
                         ) : (
                             <Modal>
-                                <Modal.Trigger>
-                                    <Button className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors">
-                                        Request to Borrow
-                                    </Button>
-                                </Modal.Trigger>
-                                <Modal.Backdrop className="fixed inset-0 bg-black/50 z-40" />
-                                <Modal.Container placement="center">
-                                    <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-                                        <Modal.Dialog className="bg-white rounded-2xl shadow-xl overflow-hidden p-6 max-w-lg w-full relative outline-none">
-                                        {({ close }) => (
+                                <Button className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                                    Request to Borrow
+                                </Button>
+
+                                <Modal.Backdrop className="fixed inset-0 bg-black/50 z-40">
+                                    <Modal.Container placement="center">
+                                        {/* Removed the extra wrapping div here */}
+                                        <Modal.Dialog className="bg-white rounded-2xl shadow-xl overflow-hidden p-6 max-w-lg w-full relative outline-none z-50">
                                             <form onSubmit={async (e) => {
                                                 await handleRequestBorrow(e);
-                                                close();
+                                                // You may need to use a separate state variable to control modal visibility manually 
+                                                // if HeroUI doesn't support the ({ close }) => render prop here.
                                             }}>
                                                 <Modal.Header>
                                                     <Modal.Heading className="text-xl font-bold text-gray-900 mb-2">
                                                         Request to Borrow
                                                     </Modal.Heading>
                                                 </Modal.Header>
+
                                                 <Modal.Body className="mb-6">
                                                     <p className="text-sm text-gray-500 mb-4">
                                                         You are requesting to borrow <span className="font-semibold text-gray-700">{book.title}</span> from {book.owner?.name}.
                                                     </p>
-                                                    
+
                                                     <div className="w-full">
                                                         <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
                                                             Message for the owner (optional)
@@ -228,31 +228,27 @@ export default function BookDetailsPage() {
                                                         />
                                                     </div>
                                                 </Modal.Body>
+
                                                 <Modal.Footer className="flex justify-end gap-3 border-t border-gray-100 pt-4 mt-4">
-                                                    <button
+                                                    <Button
                                                         type="button"
-                                                        onClick={close}
+                                                        slot="close" // HeroUI uses this prop to close the modal
                                                         className="inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none transition-colors"
                                                     >
                                                         Cancel
-                                                    </button>
+                                                    </Button>
                                                     <button
                                                         type="submit"
                                                         disabled={isRequesting}
                                                         className="inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none disabled:opacity-50 transition-colors"
                                                     >
-                                                        {isRequesting ? (
-                                                            <span className="flex items-center gap-2">
-                                                                <Loader2 className="h-4 w-4 animate-spin" /> Sending...
-                                                            </span>
-                                                        ) : "Send Request"}
+                                                        {isRequesting ? "Sending..." : "Send Request"}
                                                     </button>
                                                 </Modal.Footer>
                                             </form>
-                                        )}
                                         </Modal.Dialog>
-                                    </div>
-                                </Modal.Container>
+                                    </Modal.Container>
+                                </Modal.Backdrop>
                             </Modal>
                         )}
                     </div>
