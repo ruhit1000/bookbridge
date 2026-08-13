@@ -1,6 +1,6 @@
 # BookBridge
 
-**Live Demo:** [https://your-live-url-here.com](https://your-live-url-here.com)
+**Live Demo:** [https://bookbridge-frontend.vercel.app](https://bookbridge-frontend.vercel.app)
 
 BookBridge is a modern platform that helps users discover books people are willing to lend, or list their own library to share with others. 
 
