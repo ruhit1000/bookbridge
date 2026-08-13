@@ -3,7 +3,7 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import router from "./routes/index.js";
 import { AppError } from "./lib/errors.js";
-import { PrismaClientKnownRequestError } from "./generated/prisma/internal/prismaNamespace.js";
+import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 
 const app = express();
@@ -71,8 +71,8 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
         return;
     }
 
-    if (err instanceof PrismaClientKnownRequestError) {
-        if ((err as PrismaClientKnownRequestError).code === "P2002") {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        if (err.code === "P2002") {
             res.status(409).json({
                 success: false,
                 message: "A record with that value already exists",
@@ -80,7 +80,7 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
             return;
         }
 
-        if ((err as PrismaClientKnownRequestError).code === "P2025") {
+        if (err.code === "P2025") {
             res.status(404).json({
                 success: false,
                 message: "Record not found",
