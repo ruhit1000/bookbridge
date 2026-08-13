@@ -1,10 +1,14 @@
 import axios from "axios";
 
 // Read base URL from environment, fallback for safety
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+if (!BASE_URL) {
+    console.warn("NEXT_PUBLIC_API_URL is not defined! API calls may fail.");
+}
 
 export const api = axios.create({
-    baseURL: BASE_URL,
+    baseURL: BASE_URL || "/api/v1", // Fallback to relative if not defined, though it's expected to be defined.
     headers: {
         "Content-Type": "application/json",
     },

@@ -34,10 +34,15 @@ export default function BookCard({ book }: BookCardProps) {
 
             {/* Content */}
             <div className="p-5 flex flex-col flex-grow">
-                <div className="mb-1 flex justify-between items-start gap-2">
-                    <p className="text-sm font-medium text-gray-500 truncate">
-                        {book.author}
-                    </p>
+                <div className="mb-2 flex justify-between items-start gap-2">
+                    <div className="flex flex-col min-w-0 flex-1">
+                        <h4 className="text-base font-semibold text-gray-900 truncate" title={book.title}>
+                            {book.title}
+                        </h4>
+                        <p className="text-xs text-gray-500 truncate" title={book.author}>
+                            by {book.author}
+                        </p>
+                    </div>
                     {isAvailable ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">
                             Available
